@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About This App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .navbar {
+            width: 100%;
+            max-width: 500px;
+            background-color: #334155;
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar a {
+            color: #e2e8f0;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .navbar a:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+        .content-box {
+            background-color: #ffffff;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-300 selection:text-white">
+    <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="content-box flex flex-col gap-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">About This Application</h1>
+        <p class="text-gray-700 text-lg">
+            This is a simple web application designed to demonstrate the use of smartphone motion sensors (accelerometer) via web browser APIs.
+            It displays real-time acceleration data and includes a very basic, experimental step counter.
+        </p>
+        <p class="text-gray-700 text-lg">
+            Developed using HTML, CSS (Tailwind CSS), and JavaScript.
+        </p>
+        <p class="text-gray-700 text-lg">
+            For more details or to report issues, please visit the <a href="https://github.com/stevenroseily/sensor-app-web" target="_blank" class="text-blue-600 hover:underline">GitHub repository</a>.
+        </p>
+    </div>
+</body>
+</html>

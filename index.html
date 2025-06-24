@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sensor Web App</title>
+    <title>Sensor Web App - Home</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -11,12 +11,36 @@
             font-family: 'Inter', sans-serif;
             background-color: #f0f4f8; /* Light blue-gray background */
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* Allow vertical stacking of header and content */
             align-items: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+        }
+        .navbar {
+            width: 100%;
+            max-width: 500px;
+            background-color: #334155; /* Slate 800 */
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar a {
+            color: #e2e8f0; /* Slate 200 */
+            font-weight: 600;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .navbar a:hover {
+            background-color: #475569; /* Slate 600 */
+            transform: translateY(-1px);
         }
         .container {
             background-color: #ffffff;
@@ -59,6 +83,12 @@
     </style>
 </head>
 <body class="selection:bg-blue-300 selection:text-white">
+    <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a> <!-- Example for a third page -->
+    </nav>
+
     <div class="container flex flex-col gap-6">
         <h1 class="text-3xl font-extrabold text-gray-900 mb-4">Sensor Web App</h1>
 
