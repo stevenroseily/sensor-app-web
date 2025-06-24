@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Web App</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 32px;
+            border-radius: 20px; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer shadow */
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .data-display {
+            background-color: #e2e8f0; /* Lighter gray for data fields */
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-label {
+            font-weight: 600;
+            color: #475569; /* Slate 600 */
+        }
+        .data-value {
+            color: #1e293b; /* Slate 900 */
+            font-family: 'Roboto Mono', monospace; /* Monospace for numbers */
+        }
+        button {
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-300 selection:text-white">
+    <div class="container flex flex-col gap-6">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-4">Sensor Web App</h1>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg hidden" role="alert">
+            <p id="messageText"></p>
+        </div>
+
+        <p id="status" class="text-gray-600 text-lg mb-4">Initializing sensors...</p>
+
+        <button id="toggleButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors duration-300 ease-in-out cursor-pointer text-lg">
+            Start Sensors
+        </button>
+
+        <div class="space-y-4 mt-6">
+            <div class="data-display">
+                <span class="data-label">Acceleration X:</span>
+                <span id="accelX" class="data-value">0.00</span>
+            </div>
+            <div class="data-display">
+                <span class="data-label">Acceleration Y:</span>
+                <span id="accelY" class="data-value">0.00</span>
+            </div>
+            <div class="data-display">
+                <span class="data-label">Acceleration Z:</span>
+                <span id="accelZ" class="data-value">0.00</span>
+            </div>
+            <div class="data-display bg-green-100">
+                <span class="data-label text-green-800">Steps Detected:</span>
+                <span id="stepCount" class="data-value text-green-900 font-bold">0</span>
+            </div>
+        </div>
+
+        <p class="text-sm text-gray-500 mt-6">
+            <strong class="text-gray-700">Note on Pedometer:</strong> The step counter is a very basic demonstration. A robust pedometer requires advanced algorithms and might use dedicated sensor APIs (which have limited browser support) for accuracy. This example merely detects significant changes in acceleration.
+        </p>
+    </div>
+
+    <script>
+        const statusDisplay = document.getElementById('status');
+        const accelXDisplay = document.getElementById('accelX');
+        const accelYDisplay = document.getElementById('accelY');
+        const accelZDisplay = document.getElementById('accelZ');
+        const stepCountDisplay = document.getElementById('stepCount');
+        const toggleButton = document.getElementById('toggleButton');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        let isSensorRunning = false;
+        let stepCount = 0;
+
+        // Pedometer-like variables (very simplified)
+        let lastAccelMagnitude = 0;
+        const THRESHOLD_HIGH = 12; // Threshold for peak detection (tune this)
+        const THRESHOLD_LOW = 9;  // Threshold for valley detection (tune this)
+        let isPeak = false; // Flag to detect when we're going over a peak
+
+        function showMessage(message, type = 'info') {
+            console.log(`Message (${type}): ${message}`); // Log messages to console
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBox.className = 'bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg'; // Reset classes
+            if (type === 'error') {
+                messageBox.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700');
+                messageBox.classList.add('bg-red-100', 'border-red-500', 'text-red-700');
+            } else if (type === 'success') {
+                messageBox.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700');
+                messageBox.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+            }
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        // Function to handle device motion data
+        function handleMotion(event) {
+            const { x, y, z } = event.accelerationIncludingGravity;
+
+            accelXDisplay.textContent = x ? x.toFixed(2) : 'N/A';
+            accelYDisplay.textContent = y ? y.toFixed(2) : 'N/A';
+            accelZDisplay.textContent = z ? z.toFixed(2) : 'N/A';
+
+            // --- Very basic step detection logic ---
+            if (x !== null && y !== null && z !== null) {
+                const currentAccelMagnitude = Math.sqrt(x * x + y * y + z * z);
+
+                // Detect a "peak" in acceleration (a step usually involves a quick upward/downward movement)
+                if (currentAccelMagnitude > THRESHOLD_HIGH && lastAccelMagnitude <= THRESHOLD_HIGH) {
+                    isPeak = true;
+                }
+                // Detect when acceleration returns to a "normal" level after a peak, indicating end of a step
+                else if (currentAccelMagnitude < THRESHOLD_LOW && lastAccelMagnitude >= THRESHOLD_LOW && isPeak) {
+                    stepCount++;
+                    stepCountDisplay.textContent = stepCount;
+                    isPeak = false; // Reset for next peak
+                }
+                lastAccelMagnitude = currentAccelMagnitude;
+            }
+            // --- End of basic step detection logic ---
+        }
+
+        // Function to start sensor listening
+        function startSensors() {
+            if (!window.isSecureContext) {
+                statusDisplay.textContent = 'Requires HTTPS for sensor access.';
+                showMessage('This app requires a secure (HTTPS) connection to access device sensors. Please open it via HTTPS.', 'error');
+                console.error('Sensor access blocked: Not in a secure context (HTTPS).');
+                return;
+            }
+
+            if (window.DeviceMotionEvent) {
+                // Request permission for iOS 13+ Safari (and potentially other browsers in the future)
+                if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                    DeviceMotionEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                window.addEventListener('devicemotion', handleMotion);
+                                statusDisplay.textContent = 'Sensors running.';
+                                toggleButton.textContent = 'Stop Sensors';
+                                isSensorRunning = true;
+                                showMessage('Sensor access granted and started!', 'success');
+                                console.log('DeviceMotion access granted and listener added.');
+                            } else {
+                                statusDisplay.textContent = 'Permission denied.';
+                                showMessage('Motion sensor permission denied. Cannot start sensors.', 'error');
+                                console.warn('DeviceMotion permission denied.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error requesting device motion permission:', error);
+                            statusDisplay.textContent = 'Error requesting permission.';
+                            showMessage('Error requesting permission: ' + error.message, 'error');
+                        });
+                } else {
+                    // For browsers that don't require explicit permission or already granted
+                    window.addEventListener('devicemotion', handleMotion);
+                    statusDisplay.textContent = 'Sensors running.';
+                    toggleButton.textContent = 'Stop Sensors';
+                    isSensorRunning = true;
+                    showMessage('Sensors started. No explicit permission required or already granted.', 'success');
+                    console.log('DeviceMotion listener added without explicit permission request.');
+                }
+            } else {
+                statusDisplay.textContent = 'DeviceMotionEvent not supported on this browser/device.';
+                showMessage('Your browser or device does not support Device Motion events.', 'error');
+                console.error('DeviceMotionEvent API not found on this browser/device.');
+            }
+        }
+
+        // Function to stop sensor listening
+        function stopSensors() {
+            window.removeEventListener('devicemotion', handleMotion);
+            statusDisplay.textContent = 'Sensors stopped.';
+            toggleButton.textContent = 'Start Sensors';
+            isSensorRunning = false;
+            showMessage('Sensors stopped.', 'info');
+            console.log('DeviceMotion listener removed.');
+        }
+
+        // Toggle button functionality
+        toggleButton.addEventListener('click', () => {
+            if (isSensorRunning) {
+                stopSensors();
+            } else {
+                startSensors();
+            }
+        });
+
+        // Initial status check and secure context check
+        if (!window.isSecureContext) {
+            statusDisplay.textContent = 'Requires HTTPS for sensor access.';
+            toggleButton.disabled = true;
+            toggleButton.classList.add('opacity-50', 'cursor-not-allowed');
+            showMessage('This app requires a secure (HTTPS) connection to access device sensors. Please open it via HTTPS.', 'error');
+            console.error('Initial check: Not in a secure context (HTTPS).');
+        } else if (!window.DeviceMotionEvent) {
+            statusDisplay.textContent = 'DeviceMotionEvent not supported on this browser/device.';
+            toggleButton.disabled = true;
+            toggleButton.classList.add('opacity-50', 'cursor-not-allowed');
+            showMessage('Device motion sensors are not supported on your browser/device.', 'error');
+            console.error('Initial check: DeviceMotionEvent API not found.');
+        } else {
+            statusDisplay.textContent = 'Ready to start sensors.';
+            showMessage('Click "Start Sensors" to begin. You may be asked for permission.', 'info');
+            console.log('Initial check: DeviceMotionEvent API available and secure context confirmed.');
+        }
+    </script>
+</body>
+</html>
